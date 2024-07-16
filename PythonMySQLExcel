@@ -1,4 +1,6 @@
 --Python export to Excel using MySQL
+--use in a Python environment or IDE.. or cmdline
+--Darius Jelen imported 07162024
 
 pip install pandas openpyxl mysql-connector-python
 import pandas as pd
