@@ -1,0 +1,59 @@
+--MySQL / framwork for month to month sales information with details on numeric and percentage changes
+--init 05092024,  transferred to git 07162024
+--Darius Jelen
+
+SELECT
+    DATE_FORMAT(SaleDate, '%Y-%m') AS Month,
+    SUM(Amount) AS TotalSales
+FROM Sales
+GROUP BY DATE_FORMAT(SaleDate, '%Y-%m')
+ORDER BY Month;
+WITH MonthlySales AS (
+    SELECT
+        DATE_FORMAT(SaleDate, '%Y-%m') AS Month,
+        SUM(Amount) AS TotalSales
+    FROM Sales
+    GROUP BY DATE_FORMAT(SaleDate, '%Y-%m')
+)
+
+SELECT
+    Current.Month AS CurrentMonth,
+    Current.TotalSales AS CurrentMonthSales,
+    Previous.Month AS PreviousMonth,
+    Previous.TotalSales AS PreviousMonthSales,
+    IFNULL(Current.TotalSales - Previous.TotalSales, Current.TotalSales) AS Difference
+FROM
+    MonthlySales AS Current
+LEFT JOIN
+    MonthlySales AS Previous
+ON
+    DATE_FORMAT(STR_TO_DATE(Current.Month, '%Y-%m') - INTERVAL 1 MONTH, '%Y-%m') = Previous.Month
+ORDER BY Current.Month;
+
+-- percentage change month over month
+
+WITH MonthlySales AS (
+    SELECT
+        DATE_FORMAT(SaleDate, '%Y-%m') AS Month,
+        SUM(Amount) AS TotalSales
+    FROM Sales
+    GROUP BY DATE_FORMAT(SaleDate, '%Y-%m')
+)
+
+SELECT
+    Current.Month AS CurrentMonth,
+    Current.TotalSales AS CurrentMonthSales,
+    Previous.Month AS PreviousMonth,
+    Previous.TotalSales AS PreviousMonthSales,
+    IFNULL(Current.TotalSales - Previous.TotalSales, Current.TotalSales) AS Difference,
+    IFNULL(
+        (Current.TotalSales - Previous.TotalSales) / Previous.TotalSales * 100,
+        100
+    ) AS PercentageChange
+FROM
+    MonthlySales AS Current
+LEFT JOIN
+    MonthlySales AS Previous
+ON
+    DATE_FORMAT(STR_TO_DATE(Current.Month, '%Y-%m') - INTERVAL 1 MONTH, '%Y-%m') = Previous.Month
+ORDER BY Current.Month;
