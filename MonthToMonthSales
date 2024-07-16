@@ -1,6 +1,11 @@
---MySQL / framwork for month to month sales information with details on numeric and percentage changes
+--MySQL framework for month to month sales information with details on numeric and percentage changes
 --init 05092024,  transferred to git 07162024
 --Darius Jelen
+
+--to add: 1. alternative export method using Python to send results to an Excel document
+--still a WIP
+
+--future use ignore pls: pip install pandas openpyxl sqlalchemy
 
 SELECT
     DATE_FORMAT(SaleDate, '%Y-%m') AS Month,
@@ -57,3 +62,5 @@ LEFT JOIN
 ON
     DATE_FORMAT(STR_TO_DATE(Current.Month, '%Y-%m') - INTERVAL 1 MONTH, '%Y-%m') = Previous.Month
 ORDER BY Current.Month;
+
+mysql -u username -p -e "SELECT * FROM Sales" database_name > output.csv
