@@ -1,0 +1,63 @@
+--Python export to Excel using MySQL
+
+pip install pandas openpyxl mysql-connector-python
+import pandas as pd
+import mysql.connector
+from mysql.connector import Error
+
+# Define your MySQL connection parameters
+db_config = {
+    'host': 'your_host',         # e.g., 'localhost' or an IP address
+    'user': 'your_username',     # your MySQL username
+    'password': 'your_password', # your MySQL password
+    'database': 'your_database'  # your database name
+}
+
+# SQL query
+query = """
+WITH MonthlySales AS (
+    SELECT
+        DATE_FORMAT(SaleDate, '%Y-%m') AS Month,
+        SUM(Amount) AS TotalSales
+    FROM Sales
+    GROUP BY DATE_FORMAT(SaleDate, '%Y-%m')
+)
+
+SELECT
+    Current.Month AS CurrentMonth,
+    Current.TotalSales AS CurrentMonthSales,
+    Previous.Month AS PreviousMonth,
+    Previous.TotalSales AS PreviousMonthSales,
+    IFNULL(Current.TotalSales - Previous.TotalSales, Current.TotalSales) AS Difference,
+    IFNULL(
+        (Current.TotalSales - Previous.TotalSales) / Previous.TotalSales * 100,
+        100
+    ) AS PercentageChange
+FROM
+    MonthlySales AS Current
+LEFT JOIN
+    MonthlySales AS Previous
+ON
+    DATE_FORMAT(STR_TO_DATE(Current.Month, '%Y-%m') - INTERVAL 1 MONTH, '%Y-%m') = Previous.Month
+ORDER BY Current.Month;
+"""
+
+try:
+    # Connect to the database
+    connection = mysql.connector.connect(**db_config)
+    
+    if connection.is_connected():
+        # Execute the query and fetch the results into a DataFrame
+        df = pd.read_sql(query, connection)
+        
+        # Write the DataFrame to an Excel file
+        df.to_excel('monthly_comparison.xlsx', index=False, engine='openpyxl')
+        print("Data successfully exported to 'monthly_comparison.xlsx'")
+        
+except Error as e:
+    print(f"Error: {e}")
+    
+finally:
+    if connection.is_connected():
+        connection.close()
+        print("MySQL connection closed")
